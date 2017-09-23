@@ -1,4 +1,4 @@
-# Project Proposal: Yelp Cuisine Classifier
+# Project Proposal: Airbnb Destination Prediction
 By Michael Hu and David Zhao
 
 ## Introduction
