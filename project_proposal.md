@@ -2,10 +2,10 @@
 By Michael Hu and David Zhao
 
 ## Introduction
-Airbnb has found great success in the past few years as way to painlessly rent out space and to find places to stay during trips. For travelers, the spaces can be as interestnig as the destination itself and the cost is much easier on the wallet. For these reasons, people can be encouraged to check out different destinations around the globe.
+With the rise of Airbnb, finding places to stay during trips has never been easier, cheaper, or more centralized. We are interested in determining if the demographics, search histories, and other user data available on Airbnb can be used to accurately predict their next booking location by country. This idea originates from a kaggle competition hosted in 2014.
 
 ## Data
-Airbnb has provided data on over 275000 of their users through [kaggle](https://www.kaggle.com/c/airbnb-recruiting-new-user-bookings). 
+We will be using Airbnb data provided via a [kaggle competition](https://www.kaggle.com/c/airbnb-recruiting-new-user-bookings).  The dataset contains demographic information, session logs, and summary statistics of around 275,000 Airbnb users who made bookings in over 12 different countries. The data was proactively split into training and test data; however, we intend to merge the data back together so we don't limit our validation options.
 
 ## Justification
-Accurately predicting where a new user will book their first trip can help Airbnb provide a more personal, expedient experience and lower the time it takes for the user to book their first trip.
+Possessing the ability to accurately predict where a user wants to book their next trip allows travel companies to provide targetted ads related to the predicted location, theoretically improving clickthrough rates. Also, proactively knowing when surges in travelers to certain destinations will occur may give companies like Airbnb reason to incentivize more users to rent out their spaces in the destinations in question so there is enough space available for everyone.
