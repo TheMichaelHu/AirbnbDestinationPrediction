@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import HuberRegressor
+from sklearn.linear_model import Ridge
 from sklearn.neighbors import KNeighborsRegressor
 
 
@@ -17,8 +17,8 @@ def main():
 
   print("[INFO] training age model...")
   X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
-  # model = HuberRegressor()
-  model = RandomForestRegressor(n_estimators=10, max_features="sqrt", n_jobs=8)
+  model = Ridge(alpha=100)
+  # model = RandomForestRegressor(n_estimators=100, max_features="sqrt", n_jobs=8)
   scores = cross_val_score(model, X_train, y_train, cv=10)
   print(scores)
   model.fit(X_train, y_train)
@@ -30,7 +30,7 @@ def main():
   print("[INFO] predicting ages...")
   model.fit(X, y)
   preds = model.predict(X_missing)
-  np.savetxt("glrm_results.csv", preds, delimiter=',')
+  np.savetxt("reg_results.csv", preds, delimiter=',')
 
 
 if __name__ == "__main__":
