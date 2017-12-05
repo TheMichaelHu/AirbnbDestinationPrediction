@@ -20,7 +20,11 @@ def bin_encode_country(target_country, ys):
 
 
 def accuracy_on_original(model, x, y):
-  print("Accuracy on original data:", model.score(x, y))
+  print("Accuracy on data:", model.score(x, y),"\n")
+
+
+def get_truncated_data(data):
+  return data[["age","date_first_booking_day","date_account_created_day","date_first_booking_month","date_account_created_month","date_first_booking_year","FEMALE","date_account_created_year","secs_elapsed","is_weekend","first_affiliate_tracked_untracked","first_browser_Chrome","MALE","first_device_type_Mac Desktop","first_affiliate_tracked_linked","signup_flow_0","first_browser_Firefox","first_device_type_Windows Desktop","first_browser_Safari","first_affiliate_tracked_omg","affiliate_channel_direct","affiliate_provider_direct","signup_method_facebook","submit","signup_method_basic","affiliate_provider_google","view","data","click","message_post","affiliate_channel_sem-brand","first_browser_IE","affiliate_channel_sem-non-brand"]]
 
 
 def predict_all_countries(X_train, y_train, X_test, y_test, n_folds):
@@ -40,7 +44,7 @@ def predict_all_countries(X_train, y_train, X_test, y_test, n_folds):
   return model
 
 
-def predict_is_country_or_not(target_country, X_train, y_train, X_test, y_test, n_folds, class_weight=None):
+def predict_linear(target_country, X_train, y_train, X_test, y_test, n_folds, class_weight=None):
   print("[INFO] Predicting if user books trip to", target_country)
 
   y_train_bin = bin_encode_country(target_country, y_train)
@@ -72,9 +76,9 @@ def predict_random_forest(target_country, X_train, y_train, X_test, y_test, n_fo
   model.fit(X_train, y_train)
   print("train accuracy:", model.score(X_train, y_train))
   print("test accuracy:", model.score(X_test, y_test))
-  print("  Number of features:", model.n_features_)
-  print("  Most important ft :", model.feature_importances_[0])
-  print("  Least important ft:", model.feature_importances_[-1])
+  print("  Most important ft.: ", model.feature_importances_[0])
+  print("  Least important ft.:", model.feature_importances_[-1])
+
 
   if PLOT_IMPORTANCE:
     importances = model.feature_importances_
@@ -98,6 +102,24 @@ def predict_random_forest(target_country, X_train, y_train, X_test, y_test, n_fo
 
   return model
 
+def predict_random_truncated_forest(target_country, X_train, y_train, X_test, y_test, n_folds, predict_all=False, class_weight=None):
+  global feature_names, PLOT_IMPORTANCE
+  if not predict_all:  # predict each country
+    y_train = bin_encode_country(target_country, y_train)
+    y_test = bin_encode_country(target_country, y_test)
+
+  print("[INFO] Training truncated random forest")
+  model = RandomForestClassifier(n_jobs=3, class_weight=class_weight)
+
+  print("[INFO] fitting model to data")
+  model.fit(X_train, y_train)
+  print("train accuracy:", model.score(X_train, y_train))
+  print("test accuracy:", model.score(X_test, y_test))
+  print("  Most important ft.: ", model.feature_importances_[0])
+  print("  Least important ft.:", model.feature_importances_[-1])
+
+  return model
+
 
 def predict_svm(target_country, X_train, y_train, X_test, y_test, n_folds, class_weight=None):
   y_train_bin = bin_encode_country(target_country, y_train)
@@ -110,79 +132,109 @@ def predict_svm(target_country, X_train, y_train, X_test, y_test, n_folds, class
   print("[INFO] fitting model to data")
   model.fit(X_train, y_train_bin)
   print("train accuracy:", model.score(X_train, y_train_bin))
-  print("test accuracy:", model.score(X_test, y_test_bin))
+  print("test accuracy: ", model.score(X_test, y_test_bin))
 
   return model
 
 
-def tests_without_SMOTE(X_orig, y_orig, test_size, random_state, folds, target_country, binary=False):
+def tests_without_SMOTE(X_orig, y_orig, X_holdout, y_holdout, test_size, random_state, folds, target_country, binary=False):
   # training without oversampling/undersampling:
+  y_holdout_bin = bin_encode_country(target_country, y_holdout)
+
   print("[INFO] With original sample:")
   X_train, X_test, y_train, y_test = train_test_split(X_orig, y_orig, test_size=test_size, random_state=random_state)
 
   # Linear Regression:
-  # model = predict_is_country_or_not(target_country, X_train, y_train, X_test, y_test, class_weight = None, n_folds = folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  model = predict_linear(target_country, X_train, y_train, X_test, y_test, class_weight = None, n_folds = folds)
+  accuracy_on_original(model, X_holdout, y_holdout_bin)
 
-  # model = predict_is_country_or_not(target_country, X_train, y_train, X_test, y_test, class_weight = "balanced", n_folds = folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  model = predict_linear(target_country, X_train, y_train, X_test, y_test, class_weight = "balanced", n_folds = folds)
+  accuracy_on_original(model, X_holdout, y_holdout_bin)
 
   # Linear SVM:
-  # model = predict_svm(target_country, X_train, y_train, X_test, y_test, n_folds=folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
-  #
-  # model = predict_svm(target_country, X_train, y_train, X_test, y_test, class_weight="balanced", n_folds=folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  model = predict_svm(target_country, X_train, y_train, X_test, y_test, n_folds=folds)
+  accuracy_on_original(model, X_holdout, y_holdout_bin)
+  
+  model = predict_svm(target_country, X_train, y_train, X_test, y_test, class_weight="balanced", n_folds=folds)
+  accuracy_on_original(model, X_holdout, y_holdout_bin)
 
   # Random Forest:
-  # model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, n_folds=folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, n_folds=folds)
+  accuracy_on_original(model, X_holdout, y_holdout_bin)
 
   if binary:
     model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, class_weight="balanced", n_folds=folds)
-    accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+    accuracy_on_original(model, X_holdout,y_holdout_bin)
   else:
     model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, predict_all=True, class_weight="balanced", n_folds=folds)
-    accuracy_on_original(model, X_orig, y_orig)
+    accuracy_on_original(model, X_holdout, y_holdout)
   return model
 
 
-def tests_with_SMOTE(X_orig, y_orig, test_size, random_state, folds, target_country, binary=False):
+def tests_with_SMOTE(X_orig, y_orig, X_holdout, y_holdout, test_size, random_state, folds, target_country, binary=False):
   # training with oversampling/undersampling:
+  y_holdout_bin = bin_encode_country(target_country, y_holdout)
+
   print("[INFO] With oversampling/undersampling:")
   X, y = SMOTE().fit_sample(X_orig, y_orig)
   X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
 
-  # model = predict_is_country_or_not(target_country, X_train, y_train, X_test, y_test, class_weight = None, n_folds = folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  # model = predict_linear(target_country, X_train, y_train, X_test, y_test, class_weight = None, n_folds = folds)
+  # accuracy_on_original(model, X_holdout, y_holdout_bin)
 
-  # model = predict_is_country_or_not(target_country, X_train, y_train, X_test, y_test, class_weight = "balanced", n_folds = folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  # model = predict_linear(target_country, X_train, y_train, X_test, y_test, class_weight = "balanced", n_folds = folds)
+  # accuracy_on_original(model, X_holdout, y_holdout_bin)
 
   # model = predict_svm(target_country, X_train, y_train, X_test, y_test, n_folds=folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
-  #
+  # accuracy_on_original(model, X_holdout, y_holdout_bin)
+  
   # model = predict_svm(target_country, X_train, y_train, X_test, y_test, class_weight="balanced", n_folds=folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  # accuracy_on_original(model, X_holdout, y_holdout_bin)
 
   # Random Forest:
   # model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, n_folds=folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
-  #
+  # accuracy_on_original(model, X_holdout, y_holdout_bin)
+
+  model = predict_random_truncated_forest(target_country, X_train, y_train, X_test, y_test, class_weight="balanced", n_folds=folds)
+  accuracy_on_original(model, get_truncated_data(X_holdout), y_holdout_bin)
+  
+  model = predict_random_truncated_forest(target_country, X_train, y_train, X_test, y_test, predict_all=True, class_weight="balanced", n_folds=folds)
+  accuracy_on_original(model, get_truncated_data(X_holdout), y_holdout)
+  
   if binary:
     model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, class_weight="balanced", n_folds=folds)
-    accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+    accuracy_on_original(model, X_holdout, y_holdout_bin)
   else:
     model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, predict_all=True, class_weight="balanced", n_folds=folds)
-    accuracy_on_original(model, X_orig, y_orig)
+    accuracy_on_original(model, X_holdout, y_holdout)
+
   return model
 
 
+def test_truncated_forests(X_truncated, y_orig, test_size, random_state, folds, target_country):
+  print("[INFO] Looking at Reduced Forests")
+
+  print("[INFO] without oversampling: ")
+  X_train, X_holdout, y_train, y_holdout = train_test_split(X_truncated, y_orig, test_size=.33)
+
+  y_holdout_bin = bin_encode_country(target_country, y_holdout)
+
+  xtr, xte, ytr, yte = train_test_split(X_train, y_train, test_size=test_size, random_state=random_state)
+  model1 = predict_random_truncated_forest(target_country, xtr, ytr, xte, yte, n_folds=folds, predict_all=False, class_weight="balanced")
+  model2 = predict_random_truncated_forest(target_country, xtr, ytr, xte, yte, n_folds=folds, predict_all=True, class_weight="balanced")
+  print_results(model1, model2, target_country, X_holdout, y_holdout)
+
+  print("[INFO] Using oversampling: ")
+  X, y = SMOTE().fit_sample(X_truncated, y_orig)
+  xtr, xte, ytr, yte = train_test_split(X, y, test_size=test_size, random_state=random_state)
+  model1 = predict_random_truncated_forest(target_country, xtr, ytr, xte, yte, n_folds=folds, predict_all=False, class_weight="balanced")
+  
+  model2 = predict_random_truncated_forest(target_country, xtr, ytr, xte, yte, n_folds=folds, predict_all=True, class_weight="balanced")
+  print_results(model1, model2, target_country, X_holdout, y_holdout)
+
+
 # from http://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
-def plot_confusion_matrix(cm, classes,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Greens):
+def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix',cmap=plt.cm.Greens):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
@@ -217,7 +269,7 @@ def plot_confusion_matrix(cm, classes,
 def print_results(model1, model2, target_country, X_test, y_test):
   y_test_bin = bin_encode_country(target_country, y_test)
 
-  print(model1.score(X_test, y_test_bin))
+  print("Holdout accuracy on model 1:", model1.score(X_test, y_test_bin))
 
   # Compute confusion matrix
   cnf_matrix = confusion_matrix(y_test_bin, model1.predict(X_test))
@@ -230,7 +282,7 @@ def print_results(model1, model2, target_country, X_test, y_test):
 
   plt.show()
 
-  print(model2.score(X_test, y_test))
+  print("Holdout accuracy on model 2:", model2.score(X_test, y_test))
 
   # Compute confusion matrix
   cnf_matrix = confusion_matrix(y_test, model2.predict(X_test))
@@ -246,31 +298,32 @@ def print_results(model1, model2, target_country, X_test, y_test):
 
 def main():
   global feature_names
-  print("[INFO] loading data...")
-  data = pd.read_csv("final_dataset.csv", sep=",")
-
-  X_orig = data.drop(["country_destination"], axis=1)
-  y_orig = data["country_destination"]
-
-  X_train, X_test, y_train, y_test = train_test_split(X_orig, y_orig, test_size=.33)
-
-  feature_names = list(X_orig)
-
   # constants
   test_size = 0.33
   random_state = 42
   folds = 10
   target_country = "US"
 
-  # use held-out data on model
-  model1 = tests_without_SMOTE(X_train, y_train, test_size, random_state, folds, target_country, binary=True)
-  model2 = tests_without_SMOTE(X_train, y_train, test_size, random_state, folds, target_country)
-  print_results(model1, model2, target_country, X_test, y_test)
+  print("[INFO] loading data...")
+  data = pd.read_csv("final_dataset.csv", sep=",")
 
-  # use held-out data on model
-  model1 = tests_with_SMOTE(X_train, y_train, test_size, random_state, folds, target_country, binary=True)
-  model2 = tests_with_SMOTE(X_train, y_train, test_size, random_state, folds, target_country)
-  print_results(model1, model2, target_country, X_test, y_test)
+  X_orig = data.drop(["country_destination"], axis=1)
+  y_orig = data["country_destination"]
+
+  feature_names = list(X_orig)
+
+  X_train, X_holdout, y_train, y_holdout = train_test_split(X_orig, y_orig, test_size=.33)
+  # model1 = tests_without_SMOTE(X_train, y_train, X_holdout, y_holdout, test_size, random_state, folds, target_country, binary=True)
+  # model2 = tests_without_SMOTE(X_train, y_train, X_holdout, y_holdout, test_size, random_state, folds, target_country)
+  # print_results(model1, model2, target_country, X_holdout, y_holdout)
+
+  # model1 = tests_with_SMOTE(X_train, y_train, X_holdout, y_holdout, test_size, random_state, folds, target_country, binary=True)
+  # model2 = tests_with_SMOTE(X_train, y_train, X_holdout, y_holdout, test_size, random_state, folds, target_country)
+  # print_results(model1, model2, target_country, X_holdout, y_holdout)
+
+
+  X_truncated = get_truncated_data(X_orig)
+  test_truncated_forests(X_truncated, y_orig, test_size, random_state, folds, target_country)
 
 
 if __name__ == "__main__":
