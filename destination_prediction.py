@@ -55,7 +55,7 @@ def predict_random_forest(target_country, X_train, y_train, X_test, y_test, n_fo
     y_test = bin_encode_country(target_country, y_test)
 
   print("[INFO] Training random forest")
-  model = RandomForestClassifier(n_jobs=3, class_weight=class_weight)
+  model = RandomForestClassifier(n_jobs=3, max_features="log2",class_weight=class_weight)
   print("cross validation score:", np.sum(cross_val_score(model, X_train, y_train, cv=n_folds, verbose=1)/n_folds))
 
   print("[INFO] fitting model to data")
@@ -72,7 +72,7 @@ def predict_svm(target_country, X_train, y_train, X_test, y_test, n_folds, class
   y_test_bin = bin_encode_country(target_country, y_test)
 
   print("[INFO] Training SVM")
-  model = LinearSVC(C=1, max_iter=1000, dual=False, class_weight=class_weight)
+  model = LinearSVC(C=1, dual=False, class_weight=class_weight)
   print("cross validation score:", np.sum(cross_val_score(model, X_train, y_train_bin, cv=n_folds, verbose=1)/n_folds))
 
   print("[INFO] fitting model to data")
@@ -95,21 +95,21 @@ def tests_without_SMOTE(X_orig, y_orig, test_size, random_state, folds, target_c
   # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
 
   ## Linear SVM:
-  model = predict_svm(target_country, X_train, y_train, X_test, y_test, n_folds = folds)
-  accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  # model = predict_svm(target_country, X_train, y_train, X_test, y_test, n_folds = folds)
+  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
 
-  model = predict_svm(target_country, X_train, y_train, X_test, y_test, class_weight="balanced", n_folds = folds)
-  accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  # model = predict_svm(target_country, X_train, y_train, X_test, y_test, class_weight="balanced", n_folds = folds)
+  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
 
   ## Random Forest:
-  # model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, n_folds = folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, n_folds = folds)
+  accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
 
-  # model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, class_weight="balanced", n_folds = folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, class_weight="balanced", n_folds = folds)
+  accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
 
-  # model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, predict_all=True, class_weight="balanced", n_folds = folds)
-  # accuracy_on_original(model, X_orig, y_orig)
+  model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, predict_all=True, class_weight="balanced", n_folds = folds)
+  accuracy_on_original(model, X_orig, y_orig)
 
 
 
@@ -126,21 +126,21 @@ def tests_with_SMOTE(X_orig, y_orig, test_size, random_state, folds, target_coun
   # model = predict_is_country_or_not(target_country, X_train, y_train, X_test, y_test, class_weight = "balanced", n_folds = folds)
   # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
 
-  model = predict_svm(target_country, X_train, y_train, X_test, y_test, n_folds = folds)
-  accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  # model = predict_svm(target_country, X_train, y_train, X_test, y_test, n_folds = folds)
+  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
 
-  model = predict_svm(target_country, X_train, y_train, X_test, y_test, class_weight="balanced",n_folds = folds)
-  accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  # model = predict_svm(target_country, X_train, y_train, X_test, y_test, class_weight="balanced",n_folds = folds)
+  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
 
   ## Random Forest:
-  # model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, n_folds = folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, n_folds = folds)
+  accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
 
-  # model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, class_weight="balanced", n_folds = folds)
-  # accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
+  model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, class_weight="balanced", n_folds = folds)
+  accuracy_on_original(model, X_orig, bin_encode_country(target_country, y_orig))
 
-  # model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, predict_all=True, class_weight="balanced", n_folds = folds)
-  # accuracy_on_original(model, X_orig, y_orig)
+  model = predict_random_forest(target_country, X_train, y_train, X_test, y_test, predict_all=True, class_weight="balanced", n_folds = folds)
+  accuracy_on_original(model, X_orig, y_orig)
 
 
 
